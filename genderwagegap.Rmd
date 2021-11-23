@@ -10,6 +10,12 @@ modif depuis l'ordi de vic
 modif depuis l'ordi de yacine
 modif depuis l'ordi de raph
 
+
+3) First Table: Provide a table with brief summary statistics: sample size, average age in the population, distribution of education, occupation
+4) Second Table: Perform a regression of log wages on a gender dummy variable without other controls (unconditional wage gap). Perform similar regressions but include progressively additional sets of control variables. Report regression results in a single table across different columns as in an academic paper. Comment the results
+5) Third Table: Perform the same exercise but separately for those with more and less than high-school education
+6) Fourth Table (not compulsory): Perform further analysis that you might find interesting 7) Comment
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
