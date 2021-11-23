@@ -6,6 +6,8 @@ output:
  github_document: default
 ---
 
+modif depuis l'ordi de vic
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
