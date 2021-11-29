@@ -6,37 +6,72 @@ output:
  github_document: default
 ---
 
-modif depuis l'ordi de vic
-modif depuis l'ordi de yacine
-modif depuis l'ordi de raph
+```{r}
+setwd("/Users/hugomarty/Documents/GitHub/Project-of-Econometrics/EE_2018")
+
+install.packages("haven")  
+library(haven)
+d <- read_dta("~/Documents/GitHub/Project-of-Econometrics/EE_2018/Bases/EEC_2018INDIV.dta")
+View(d)
+
+ 
+d$TempsComplet <- ifelse(d$duhab<4,0,1)
+d <- subset(d,TempsComplet==1, drop=TRUE)
+library(tidyverse)
+dr <- d %>% select(ident,
+                  salmee, #salaire continu
+                  salmet, #salaire discontinu
+                  sexe, #sexe
+                  ag, #âge en variable continue
+                  nbenfa18, #nombre d'nefants de moins 18
+                  dip5, # éducation en 13 postes
+                  cser, #CPS
+                  nafantg004n, # primaire / secondaire / tertiaire
+                  chpub, # public / privé
+                  ancentr, # ancienneté 
+                  immi, # être immigré
+                  desc,#être descendant
+                  zus) # zone urbaine sensible
 
 
-3) First Table: Provide a table with brief summary statistics: sample size, average age in the population, distribution of education, occupation
+# education, employment, household charecteristics, gender, occupation, industry, age)
+# temps complets
+
+```
+
+
+3) First Table: Provide a table with brief summary statistics.
+
+```{r}
+
+# Sample size
+
+# Average age in the population
+
+# Distribution of education
+
+# Occupation
+
+```
+
+
 4) Second Table: Perform a regression of log wages on a gender dummy variable without other controls (unconditional wage gap). Perform similar regressions but include progressively additional sets of control variables. Report regression results in a single table across different columns as in an academic paper. Comment the results
+
+```{r}
+
+```
+
+
 5) Third Table: Perform the same exercise but separately for those with more and less than high-school education
+
+```{r}
+
+```
+
+
 6) Fourth Table (not compulsory): Perform further analysis that you might find interesting 7) Comment
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-TEST TEST
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
