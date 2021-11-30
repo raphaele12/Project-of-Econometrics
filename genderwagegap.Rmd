@@ -15,8 +15,10 @@ d <- read_dta("~/Documents/GitHub/Project-of-Econometrics/EE_2018/Bases/EEC_2018
 View(d)
 
  
-d$TempsComplet <- ifelse(d$duhab<4,0,1)
-d <- subset(d,TempsComplet==1, drop=TRUE)
+
+sum(d$tppred == 1)
+d <- subset(d,tppred==1, drop=TRUE)
+
 library(tidyverse)
 dr <- d %>% select(ident,
                   salmee, #salaire continu
@@ -33,7 +35,7 @@ dr <- d %>% select(ident,
                   desc,#être descendant
                   zus) # zone urbaine sensible
 
-
+save(dr, file = "cleaneddata")
 # education, employment, household charecteristics, gender, occupation, industry, age)
 # temps complets
 
