@@ -12,9 +12,8 @@ setwd("/Users/hugomarty/Documents/GitHub/Project-of-Econometrics/EE_2018")
 install.packages("haven")  
 library(haven)
 d <- read_dta("~/Documents/GitHub/Project-of-Econometrics/EE_2018/Bases/EEC_2018INDIV.dta")
-View(d)
 
- 
+# Réduire la base de données -----
 
 sum(d$tppred == 1)
 d <- subset(d,tppred==1, drop=TRUE)
@@ -35,14 +34,14 @@ dr <- d %>% select(ident,
                   desc,#être descendant
                   zus) # zone urbaine sensible
 
-save(dr, file = "cleaneddata")
+#save(dr, file = "cleaneddata")
 # education, employment, household charecteristics, gender, occupation, industry, age)
 # temps complets
 
 ```
 
 
-3) First Table: Provide a table with brief summary statistics.
+## 3) First Table: Provide a table with brief summary statistics.
 
 ```{r}
 
@@ -57,21 +56,24 @@ save(dr, file = "cleaneddata")
 ```
 
 
-4) Second Table: Perform a regression of log wages on a gender dummy variable without other controls (unconditional wage gap). Perform similar regressions but include progressively additional sets of control variables. Report regression results in a single table across different columns as in an academic paper. Comment the results
+## 4) Second Table: 
+Perform a regression of log wages on a gender dummy variable without other controls (unconditional wage gap). Perform similar regressions but include progressively additional sets of control variables. Report regression results in a single table across different columns as in an academic paper. Comment the results
 
 ```{r}
 
 ```
 
 
-5) Third Table: Perform the same exercise but separately for those with more and less than high-school education
+## 5) Third Table: 
+Perform the same exercise but separately for those with more and less than high-school education
 
 ```{r}
 
 ```
 
 
-6) Fourth Table (not compulsory): Perform further analysis that you might find interesting 7) Comment
+## 6) Fourth Table (not compulsory): 
+Perform further analysis that you might find interesting 7) Comment
 
 ```{r}
 
