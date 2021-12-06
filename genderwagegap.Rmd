@@ -1,5 +1,5 @@
 ---
-title: "genderwagegap"
+title: "Estimating the gender wage gap in France"
 author: "Yacine, Victoria and Raphaële"
 date: "11/23/2021"
 output: 
@@ -7,9 +7,9 @@ output:
 ---
 
 ```{r}
-setwd("/Users/hugomarty/Documents/GitHub/Project-of-Econometrics/EE_2018")
+#setwd("/Users/hugomarty/Documents/GitHub/Project-of-Econometrics/EE_2018")
 library(haven)
-d <- read_dta("~/Documents/GitHub/Project-of-Econometrics/EE_2018/Bases/EEC_2018INDIV.dta")
+#d <- read_dta("~/Documents/GitHub/Project-of-Econometrics/EE_2018/Bases/EEC_2018INDIV.dta")
 
 library(questionr)
 library(tidyverse)
@@ -21,8 +21,11 @@ library(stargazer)
 # Réduire la base de données -----
 
 #Garder seulement les temps complets et les salaires réalistes ----
-sum(d$tppred == 1)
-d <- subset(d,tppred==1 & salmee >=988 & salmee<=9999997, drop=TRUE) 
+
+#sum(d$tppred == 1)
+#d <- subset(d,tppred==1 & salmee >=988 & salmee<=9999997, drop=TRUE) 
+#save(d, file = "EE_2018_allege.RData")
+load("EE_2018_allege.RData")
 
 #Garder seulement les variables d'intérêt -----
 
