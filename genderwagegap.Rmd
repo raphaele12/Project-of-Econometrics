@@ -20,13 +20,14 @@ library(stargazer)
 
 # Réduire la base de données -----
 
+#Garder seulement les temps complets et les salaires réalistes ----
 sum(d$tppred == 1)
-d <- subset(d,tppred==1, drop=TRUE)
+d <- subset(d,tppred==1 & salmee >=988 & salmee<=9999997, drop=TRUE) 
 
-library(tidyverse)
+#Garder seulement les variables d'intérêt -----
+
 dr <- d %>% select(ident,
                   salmee, #salaire continu
-                  salmet, #salaire discontinu
                   sexe, #sexe
                   ag, #âge en variable continue
                   nbenfa18, #nombre d'nefants de moins 18
@@ -34,15 +35,19 @@ dr <- d %>% select(ident,
                   cser, #CPS
                   nafg004n, # primaire / secondaire / tertiaire
                   chpub, # public / privé
-                  ancentr, # ancienneté 
-                  immi, # être immigré
-                  desc,#être descendant
-                  zus) # zone urbaine sensible 
-dr <- dr  %>% mutate_at(vars(salmee, sexe, ag, nbenfa18, dip5, cser, chpub, ancentr, immi, desc,zus), funs(as.numeric))
+                  ancentr) # ancienneté 
+  
 
-#write_dta(d, "/Users/hugomarty/Documents/GitHub/Project-of-Econometrics", version = 14)
+#immi, # être immigré
+#desc,#être descendant
+#zus# zone urbaine sensible 
+
+#Changer le format des variables -----
+
+dr <- dr  %>% mutate_at(vars(salmee, ag, nbenfa18, ancentr), funs(as.numeric)) %>% mutate_at(vars(sexe, dip5, cser, chpub), funs(as.factor))
+
 # education, employment, household charecteristics, gender, occupation, industry, age)
-# temps complets
+
 
 ```
 
@@ -51,16 +56,16 @@ dr <- dr  %>% mutate_at(vars(salmee, sexe, ag, nbenfa18, dip5, cser, chpub, ance
 
 ```{r}
 
-# Sample size
+## Summary statistics -----
+# Sample size -----
 nrow(d) #nombre d'observations
-#length(dr) nombre de variables
 
-# Average age in the population
+# Average age in the population -----
 
 d$ag <- as.numeric(d$ag)
 mean(d$ag)
 
-# Distribution of education
+# Distribution of education ------
 
 d$dip5 <- as.numeric(d$dip5)
 
@@ -72,7 +77,7 @@ d$dip5 <- as.numeric(d$dip5)
 freq_ed <- freq(d$dip5) 
 view(freq_ed)
 
-# Occupation
+# Occupation ------
 
 d$cser <- as.numeric(d$cser)
 #hist(d$cser, main = "Répartition de la population selon la profession occupée")
@@ -80,56 +85,81 @@ d$cser <- as.numeric(d$cser)
 freq_occupation <- freq(d$cser) 
 view(freq_occupation)
 
-#Table with all the summary statistics
+#Table with all the summary statistics --------
 
 # A FAIRE
 
 ```
 
 
-## 4) Second Table: 
+## 4) Second Table: Regressions, Gendar gap - controlling for various variables
 Perform a regression of log wages on a gender dummy variable without other controls (unconditional wage gap). Perform similar regressions but include progressively additional sets of control variables. Report regression results in a single table across different columns as in an academic paper. Comment the results
 
 ```{r}
-d$salmee <- as.numeric(d$salmee)
-d$logsal <- log(d$salmee)
+
+## Régression triviale -------
 dr$logsal <- log(dr$salmee)
-reg1 <- lm(d$logsal ~ d$sexe)
-stargazer(reg1)
+reg0 <- lm(dr$logsal ~ dr$sexe)
 
-rega <- lm(logsal ~ sexe + dip5, data = dr) # salaires, sexe, éducation
 
-library(naniar)
-dr$sector <- as.factor(dr$nafg004n) %>% replace_with_na_if(.predicate = is.factor, condition = ~00)
+## Sélection des variables de contrôle -------
+# Ajout de variables de contrôle
+#Choix des variables
 
-regb <-lm(logsal ~ sexe + dip5 + ancentr + sector, data = dr) # salaires, sexe, éducation, ancienneté, 
 
-regc <- lm(logsal ~ sexe + dip5 + ancentr + nafantg004n + chpub, data = dr) # salaires, sexe, éducation, ancienneté, secteur, public vs privé
-regd <- lm(logsal ~ sexe + dip5 + ancentr + nafantg004n + nbenfa18, data = dr) # salaires, sexe, éducation, ancienneté, secteur, nombre d'enfants de moins 18
+## Reg 1 en ajoutant l'éducation -------
+reg1 <- lm(logsal ~ sexe + dip5, data = dr) # salaires, sexe, éducation
 
-stargazer(reg1, rega, regb, regc, regd)
+## Reg 2 en ajoutant l'ancienneté-------
 
+reg2 <-lm(logsal ~ sexe + dip5 + ancentr, data = dr) # salaires, sexe, éducation, ancienneté, 
+
+## Reg 3 en ajoutant le secteur ou public/privé-------
+
+dr$sector <- dr$nafg004n
+#sum(dr$sector == "00") #1907
+dr$sector[dr$sector == "00"] <- NA
+#sum(is.na(dr$sector))
+
+levels(dr$sector) <- c(levels(dr$sector), "S", "I","A")
+dr$sector[dr$sector == "EV"] <- "S"
+dr$sector[dr$sector == "ET"] <- "I"
+dr$sector[dr$sector == "EU"] <- "I"
+dr$sector[dr$sector == "ES"] <- "A"
+
+dr$sector <- as.factor(dr$sector)
+
+reg3 <- lm(logsal ~ sexe + dip5 + ancentr + sector, data = dr) # salaires, sexe, éducation, ancienneté, secteur
+reg3bis <- lm(logsal ~ sexe + dip5 + ancentr + chpub, data = dr) # salaires, sexe, éducation, ancienneté, public vs privé
+
+## Regression 4 en ajoutant le nombre d'enfants -------
+
+reg4 <- lm(logsal ~ sexe + dip5 + ancentr + sector + nbenfa18, data = dr) # salaires, sexe, éducation, ancienneté, secteur, nombre d'enfants de moins 18
+
+## Tableau sunthétique des régressions ------
+stargazer(reg0, reg1, reg2, reg3, reg3bis, reg4, 
+          type = "latex",
+          header=F, 
+          title = "Comparaison des régressions",
+          column.sep.width = "1pt",
+          font.size = "small")
+
+#   covariate.labels = c("Sexe", "Niveau de diplôme", "Ancienneté","Secteur", "Public ou privé", "Nombre d'enfants de moins de 18ans")
 
 ```
-
+\normalsize
 
 ## 5) Third Table: 
 Perform the same exercise but separately for those with more and less than high-school education
 
 ```{r}
 
-reg2_hs <- lm(d$logsal ~ d$sexe)
-reg2_abovehs <- lm(d$logsal ~ d$sexe)
-
-d$highschool <- ifelse(d$dip5<3,1,0) # égal à 1 quand l'individ a  fait  d'études supérieurs
-
+dr$highschool <- ifelse(d$dip5<3,1,0) # égal à 1 quand l'individu a  fait  d'études supérieurs
 
 reg2_onlyhs <- lm(formula = logsal[highschool=='0'] ~ sexe[highschool=='0'], data = d)
 reg2_abovehs <- lm(formula = logsal[highschool=='1'] ~ sexe[highschool=='1'], data = d)
 
-
-stargazer(reg2_onlyhs)
-stargazer(reg2_abovehs)
+stargazer(reg2_onlyhs, reg2_abovehs)
 
 ```
 
