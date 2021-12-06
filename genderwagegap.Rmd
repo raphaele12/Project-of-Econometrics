@@ -3,10 +3,13 @@ title: "Estimating the gender wage gap in France"
 author: "Yacine, Victoria and Raphaële"
 date: "11/23/2021"
 output: 
- github_document: default
+ github_document : 
 ---
 
-```{r}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE, message=FALSE, include=TRUE,
+                      cache=FALSE)
+
 #setwd("/Users/hugomarty/Documents/GitHub/Project-of-Econometrics/EE_2018")
 library(haven)
 #d <- read_dta("~/Documents/GitHub/Project-of-Econometrics/EE_2018/Bases/EEC_2018INDIV.dta")
@@ -55,18 +58,19 @@ dr <- dr  %>% mutate_at(vars(salmee, ag, nbenfa18, ancentr), funs(as.numeric)) %
 ```
 
 
-## 3) First Table: Provide a table with brief summary statistics.
+# First Table: Table with brief summary statistics.
 
-```{r}
+```{r,results='asis'}
 
 ## Summary statistics -----
 # Sample size -----
-nrow(d) #nombre d'observations
-
+n<-nrow(d) #nombre d'observations
+n
 # Average age in the population -----
 
 d$ag <- as.numeric(d$ag)
-mean(d$ag)
+mean<-mean(d$ag)
+mean
 
 # Distribution of education ------
 
@@ -78,7 +82,7 @@ d$dip5 <- as.numeric(d$dip5)
 #barplot(sort(tab_ed), col = "skyblue", main = "Répartition de la population selon le niveau de diplôme atteint")
 
 freq_ed <- freq(d$dip5) 
-view(freq_ed)
+freq_ed
 
 # Occupation ------
 
@@ -86,19 +90,22 @@ d$cser <- as.numeric(d$cser)
 #hist(d$cser, main = "Répartition de la population selon la profession occupée")
 
 freq_occupation <- freq(d$cser) 
-view(freq_occupation)
+freq_occupation
 
 #Table with all the summary statistics --------
 
 # A FAIRE
 
+
 ```
 
 
-## 4) Second Table: Regressions, Gendar gap - controlling for various variables
+# Second Table: Regressions, Gendar gap - controlling for various variables
 Perform a regression of log wages on a gender dummy variable without other controls (unconditional wage gap). Perform similar regressions but include progressively additional sets of control variables. Report regression results in a single table across different columns as in an academic paper. Comment the results
 
-```{r}
+\tiny
+
+```{r, results='asis'}
 
 ## Régression triviale -------
 dr$logsal <- log(dr$salmee)
@@ -140,37 +147,47 @@ reg3bis <- lm(logsal ~ sexe + dip5 + ancentr + chpub, data = dr) # salaires, sex
 reg4 <- lm(logsal ~ sexe + dip5 + ancentr + sector + nbenfa18, data = dr) # salaires, sexe, éducation, ancienneté, secteur, nombre d'enfants de moins 18
 
 ## Tableau sunthétique des régressions ------
-stargazer(reg0, reg1, reg2, reg3, reg3bis, reg4, 
+library(reshape2)
+table2 <- stargazer(reg0, reg1, reg2, reg3, reg3bis, reg4, 
           type = "latex",
           header=F, 
           title = "Comparaison des régressions",
-          column.sep.width = "1pt",
-          font.size = "small")
+          column.sep.width = "0,1pt",
+          font.size = "tiny")
 
 #   covariate.labels = c("Sexe", "Niveau de diplôme", "Ancienneté","Secteur", "Public ou privé", "Nombre d'enfants de moins de 18ans")
 
 ```
+
+## Comments on the regressions
+
 \normalsize
 
-## 5) Third Table: 
+# 5) Third Table: More vs Less than high-school education
 Perform the same exercise but separately for those with more and less than high-school education
 
-```{r}
+```{r, results='asis'}
 
 dr$highschool <- ifelse(d$dip5<3,1,0) # égal à 1 quand l'individu a  fait  d'études supérieurs
 
 reg2_onlyhs <- lm(formula = logsal[highschool=='0'] ~ sexe[highschool=='0'], data = d)
 reg2_abovehs <- lm(formula = logsal[highschool=='1'] ~ sexe[highschool=='1'], data = d)
 
-stargazer(reg2_onlyhs, reg2_abovehs)
+Table3 <- stargazer(reg2_onlyhs, reg2_abovehs)
 
 ```
 
 
-## 6) Fourth Table (not compulsory): 
-Perform further analysis that you might find interesting 7) Comment
+# Fourth Table (not compulsory): Further analysis 
+Perform further analysis that you might find interesting 
+
+## Test des hypothèses GM
+### H1-H3
+### Hétéroscédasticité
+### Normalité des résidus
 
 ```{r}
 
 ```
 
+# Comment
