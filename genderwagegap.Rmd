@@ -181,13 +181,53 @@ Table3 <- stargazer(reg2_onlyhs, reg2_abovehs)
 # Fourth Table (not compulsory): Further analysis 
 Perform further analysis that you might find interesting 
 
-## Test des hypothèses GM
-### H1-H3
-### Hétéroscédasticité
-### Normalité des résidus
+Inclure les temps partiels ! 
+
+# Tests
+## Multicolinéarité
+
+Le calcul des facteurs d'inflation de la variance, égaux à `r vif(reg4)` , nous indique l'absence de multicolinéarité dans notre modèle.
+
+Pour l'améliorer, nous identifions ensuite les points atypiques en procédant au calcul des *hat values*. Un point est dit atypique si sa *hat value* est 3 fois supérieure à la moyenne.
 
 ```{r}
+library(car)
+# D’abord, calculer les "hatvalues".
+reg4_hat <- hatvalues(reg4)
+# Sortir un graphique avec les hatvalues.
+plot(reg4_hat)
+# Ajouter des lignes pour la moyenne et pour trois fois la moyenne.
+abline(h=c(1,3)*mean(reg4_hat),col=2)
 
+# Identifier les observations aberrantes sur le graphique.
+id <- which(reg4_hat>3*mean(reg4_hat))
+
+```
+
+
+## Test des hypothèses GM
+### H1-H3
+Des trois premières hypothèses de Gauss-Markov, nous ne vérifions que la première qui est évidente au vu de notre première régression.
+
+### H4 : Hétéroscédasticité
+```{r}
+ggplot(mapping = aes(x = dr$logsal, y = reg4$residuals)) +
+  geom_point() + geom_smooth()
+```
+### H5 : absence de corrélations des résidus
+```{r}
+#Test de Durbin-Watson
+library(lmtest)
+dwtest(reg4)  # hypothèse nulle valide : il y a non auto-corrélation entre les résidus
+```
+
+
+### H6 : Normalité des résidus
+
+```{r}
+#QQ plot
+e4 <- reg4$residuals 
+qqnorm(e7,datax=TRUE,ylab="Quantiles observés",xlab="Quantiles théoriques")
 ```
 
 # Comment
