@@ -3,13 +3,12 @@ title: "Estimating the gender wage gap in France"
 author: "Yacine, Victoria and Raphaële"
 date: "11/23/2021"
 output: 
- github_document : 
+ pdf_document 
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,warning=FALSE, message=FALSE, include=TRUE,
                       cache=FALSE)
-
 #setwd("/Users/hugomarty/Documents/GitHub/Project-of-Econometrics/EE_2018")
 library(haven)
 #d <- read_dta("~/Documents/GitHub/Project-of-Econometrics/EE_2018/Bases/EEC_2018INDIV.dta")
@@ -21,6 +20,15 @@ library(foreign)
 library(dplyr)
 library(stargazer)
 
+require(ggrepel)
+library(FactoMineR)
+library(missMDA)
+library(factoextra)
+library(car)
+library(stats)
+library(lmtest)
+library(AER)
+
 # Réduire la base de données -----
 
 #Garder seulement les temps complets et les salaires réalistes ----
@@ -28,15 +36,22 @@ library(stargazer)
 #sum(d$tppred == 1)
 #d <- subset(d,tppred==1 & salmee >=988 & salmee<=9999997, drop=TRUE) 
 #save(d, file = "EE_2018_allege.RData")
+
+#data <- subset(d,trim==1 & salmee >=988 & salmee<=9999997, drop=TRUE) 
+#save(data, file = "EE_2018_allegeT1.RData")
+
 load("EE_2018_allege.RData")
+#load("EE_2018_allegeT1.RData")
+
 
 #Garder seulement les variables d'intérêt -----
 
 dr <- d %>% select(ident,
                   salmee, #salaire continu
+                  hhc,
                   sexe, #sexe
                   ag, #âge en variable continue
-                  nbenfa18, #nombre d'nefants de moins 18
+                  nbenfa18, #nombre d'enfants de moins 18
                   dip5, # éducation en 13 postes
                   cser, #CPS
                   nafg004n, # primaire / secondaire / tertiaire
@@ -50,47 +65,71 @@ dr <- d %>% select(ident,
 
 #Changer le format des variables -----
 
-dr <- dr  %>% mutate_at(vars(salmee, ag, nbenfa18, ancentr), funs(as.numeric)) %>% mutate_at(vars(sexe, dip5, cser, chpub), funs(as.factor))
+dr <- dr  %>% mutate_at(vars(salmee, hhc, ag, nbenfa18, ancentr), funs(as.numeric)) %>% mutate_at(vars(sexe, dip5, cser, chpub), funs(as.factor))
 
 # education, employment, household charecteristics, gender, occupation, industry, age)
 
 
 ```
 
+# Abstract
 
-# First Table: Table with brief summary statistics.
+Since September 2018, French firms with more than 50 employees are bound to publish their "index of gender professional equality", with an obligation of result. This measure might seem radical, yet at the current rhythm of progress in the matter, it would take 202 years to achieve equality.\\
+\\
+Naively comparing French data on salaries according to gender yields strikingly high levels of pay levels. However, one has to *take into account the differences existing in the employment structure between men and women*. Women represent 80 % of part-time workers, representing 30 % of women's job. They are also over-represented in the public sector which yields higher wages for low-paying jobs but lower wages for high-paying jobs – in comparison with the private sector. They are also less active in employment than men, and thus have different characteristics. We will analyze this further in our paper. Finally, they are over-represented in the sector of services, and particularly that of "care" which is characterized by low paying-jobs.  \\
+\\
+In order to isolate the pure effect of gender on wages, we conducted an econometric analysis of the gender wage gap, by introducing many control variables reflecting personal characteristics (such as the immigration status, the level of education, the seniority) and the characteristics of the jobs (sector, private/public sector). From a wage gap of ... % in the naive regression, and we managed to get down to ... % by including control variables. \\ 
+\\
+In order to evaluate *intersectionality*, we used products of dummy variables referring to personal characteristics to evaluate the *cross effect of gender and age*, *gender and migration status*, as well gender and the sector of activity. 
+
+
+# Descritive statistics.
+
+From the original dataset we keep only our variables of interest : *gender , age, number of children, level of education, socio-professional category, sector and seniority*. Previous literature on this topic helped choose these variables. 
+
+We select *full-time workers*. Because women represent about 80 % of part-time workers, this induces a clear *selection sample bias*. Indeed, women who are able to work full-time – about two thirds of women – surely have different characteristics than those who work in part-time jobs or less. For instance, studies show that having a third child leads to a significant drop in full-time employment for women. Thus, only studying full-time female workers cannot fully explain the wider gender wage gap. However, if those women have different characteristics, it can be assumed that they are ones who facilitated their integration in work : the gender wage gap will then be closer to a measure of discrimination – when controlling for variables.  
 
 ```{r,results='asis'}
 
 ## Summary statistics -----
 # Sample size -----
-n<-nrow(d) #nombre d'observations
+n<-nrow(dr) #nombre d'observations
 n
 # Average age in the population -----
 
-d$ag <- as.numeric(d$ag)
-mean<-mean(d$ag)
+mean<-mean(dr$ag)
 mean
 
 # Distribution of education ------
 
-d$dip5 <- as.numeric(d$dip5)
+dr$dip5num <- as.numeric(d$dip5)
 
 #tab_ed <- table(d$dip5)
 #view(tab_ed)
 #sort(tab_ed)
 #barplot(sort(tab_ed), col = "skyblue", main = "Répartition de la population selon le niveau de diplôme atteint")
 
-freq_ed <- freq(d$dip5) 
+freq_ed <- freq(dr$dip5num) 
 freq_ed
 
 # Occupation ------
 
-d$cser <- as.numeric(d$cser)
+dr$csernum <- as.numeric(dr$cser)
 #hist(d$cser, main = "Répartition de la population selon la profession occupée")
 
-freq_occupation <- freq(d$cser) 
+freq_occupation <- freq(dr$csernum) 
 freq_occupation
+
+
+#Salaires
+mean(dr$salmee[dr$sexe=="1"])
+mean(dr$salmee[dr$sexe=="2"])
+
+dr$salhor <- dr$salmee/(4*dr$hhc)
+dr$logsalhor <- log(dr$salhor)
+
+mean(dr$salhor[dr$sexe=="1"])
+mean(dr$salhor[dr$sexe=="2"])
 
 #Table with all the summary statistics --------
 
@@ -109,22 +148,25 @@ Perform a regression of log wages on a gender dummy variable without other contr
 
 ## Régression triviale -------
 dr$logsal <- log(dr$salmee)
-reg0 <- lm(dr$logsal ~ dr$sexe)
+#reg0 <- lm(logsal ~ sexe, data = dr)
+reg0 <- lm(logsalhor ~ sexe, data = dr)
 
 
 ## Sélection des variables de contrôle -------
 # Ajout de variables de contrôle
 #Choix des variables
 
-
 ## Reg 1 en ajoutant l'éducation -------
-reg1 <- lm(logsal ~ sexe + dip5, data = dr) # salaires, sexe, éducation
+#reg1 <- lm(logsal ~ sexe + dip5, data = dr) # salaires, sexe, éducation
+reg1 <- lm(logsalhor ~ sexe + dip5, data = dr)
 
-## Reg 2 en ajoutant l'ancienneté-------
+## Reg 2 en ajoutant l'ancienneté et l'âge-------
 
-reg2 <-lm(logsal ~ sexe + dip5 + ancentr, data = dr) # salaires, sexe, éducation, ancienneté, 
+#reg2 <-lm(logsal ~ sexe + dip5 + ancentr + I(ancentr^2/100) + ag, data = dr) # salaires, sexe, éducation, ancienneté, 
 
 ## Reg 3 en ajoutant le secteur ou public/privé-------
+
+#recodage de la variable secteur 
 
 dr$sector <- dr$nafg004n
 #sum(dr$sector == "00") #1907
@@ -139,20 +181,32 @@ dr$sector[dr$sector == "ES"] <- "A"
 
 dr$sector <- as.factor(dr$sector)
 
-reg3 <- lm(logsal ~ sexe + dip5 + ancentr + sector, data = dr) # salaires, sexe, éducation, ancienneté, secteur
-reg3bis <- lm(logsal ~ sexe + dip5 + ancentr + chpub, data = dr) # salaires, sexe, éducation, ancienneté, public vs privé
+#recodage de la varible public / privé
+dr$publicprive <- as.numeric(dr$chpub)
+levels(dr$publicprive) <- c(levels(dr$publicprive), "PU", "PRI")
+dr$publicprive[dr$publicprive == 2 | dr$publicprive == 3 | dr$publicprive == 4 | dr$publicprive == 5 | dr$publicprive ==6] <- "PU"
+dr$publicprive[dr$publicprive == 1] <- "PRI"
+dr$publicprive[dr$publicprive == 7] <- NA
+dr$publicprive <- as.factor(dr$publicprive)
+
+#reg2 <- lm(logsal ~ sexe + dip5 + sector, data = dr)
+reg2 <- lm(logsalhor ~ sexe + dip5 + sector, data = dr)
+
+stargazer(reg0, reg1, reg2)
+
+reg3 <- lm(logsal ~ sexe + dip5 + ag + ancentr + I(ancentr^2/100) + sector + publicprive, data = dr) # salaires, sexe, éducation, ancienneté, secteur, public vs privé
 
 ## Regression 4 en ajoutant le nombre d'enfants -------
 
-reg4 <- lm(logsal ~ sexe + dip5 + ancentr + sector + nbenfa18, data = dr) # salaires, sexe, éducation, ancienneté, secteur, nombre d'enfants de moins 18
+reg4 <- lm(logsal ~ sexe + dip5 + ag + ancentr + I(ancentr^2/100) + sector + nbenfa18, data = dr) # salaires, sexe, éducation, ancienneté, secteur, nombre d'enfants de moins 18
 
 ## Tableau sunthétique des régressions ------
 library(reshape2)
-table2 <- stargazer(reg0, reg1, reg2, reg3, reg3bis, reg4, 
+table2 <- stargazer(reg0, reg1, reg2, reg3, reg4, 
           type = "latex",
           header=F, 
           title = "Comparaison des régressions",
-          column.sep.width = "0,1pt",
+          column.sep.width = "0,01pt",
           font.size = "tiny")
 
 #   covariate.labels = c("Sexe", "Niveau de diplôme", "Ancienneté","Secteur", "Public ou privé", "Nombre d'enfants de moins de 18ans")
@@ -166,17 +220,23 @@ table2 <- stargazer(reg0, reg1, reg2, reg3, reg3bis, reg4,
 # 5) Third Table: More vs Less than high-school education
 Perform the same exercise but separately for those with more and less than high-school education
 
+\small
 ```{r, results='asis'}
 
-dr$highschool <- ifelse(d$dip5<3,1,0) # égal à 1 quand l'individu a  fait  d'études supérieurs
+dr$highschool <- ifelse(dr$dip5num<3,1,0) # égal à 1 quand l'individu a  fait  d'études supérieurs
 
-reg2_onlyhs <- lm(formula = logsal[highschool=='0'] ~ sexe[highschool=='0'], data = d)
-reg2_abovehs <- lm(formula = logsal[highschool=='1'] ~ sexe[highschool=='1'], data = d)
+reg2_onlyhs <- lm(formula = logsal[highschool=='0'] ~ sexe[highschool=='0'], data = dr)
+reg2_onlyhs2 <- lm(formula = logsal[highschool=='0'] ~ sexe[highschool=='0'], data = dr)
 
-Table3 <- stargazer(reg2_onlyhs, reg2_abovehs)
+reg2_abovehs <- lm(formula = logsal[highschool=='1'] ~ sexe[highschool=='1'], data = dr)
+reg2_abovehs2 <- lm(formula = logsal[highschool=='1'] ~ sexe[highschool=='1'], data = dr)
+
+Table3 <- stargazer(reg2_onlyhs, reg2_abovehs, reg2_onlyhs2, reg2_abovehs2)
+
 
 ```
 
+\normalsize
 
 # Fourth Table (not compulsory): Further analysis 
 Perform further analysis that you might find interesting 
@@ -184,11 +244,13 @@ Perform further analysis that you might find interesting
 Inclure les temps partiels ! 
 
 # Tests
-## Multicolinéarité
+## Multicolinéarité et points aberrants
 
 Le calcul des facteurs d'inflation de la variance, égaux à `r vif(reg4)` , nous indique l'absence de multicolinéarité dans notre modèle.
 
 Pour l'améliorer, nous identifions ensuite les points atypiques en procédant au calcul des *hat values*. Un point est dit atypique si sa *hat value* est 3 fois supérieure à la moyenne.
+
+\small
 
 ```{r}
 library(car)
@@ -202,32 +264,64 @@ abline(h=c(1,3)*mean(reg4_hat),col=2)
 # Identifier les observations aberrantes sur le graphique.
 id <- which(reg4_hat>3*mean(reg4_hat))
 
+
+#summary(influence.measures(reg4))
+#idinf <- which(apply(influence.measures(reg4)$is.inf, 1, any))
+#reg4_bis2 <- lm(logsal ~ sexe + dip5 + ancentr + sector + nbenfa18, data = #dr[-idinf,])
+#avPlots(reg4_bis)
+
+#Enlever les log salaires au dessus de 10
+drva <- subset(dr, logsal<9, drop=TRUE)
+reg4va <- lm(logsal ~ sexe + ag +dip5 + ancentr + sector + nbenfa18, data = drva)
+
 ```
 
-
+\normalsize
 ## Test des hypothèses GM
 ### H1-H3
 Des trois premières hypothèses de Gauss-Markov, nous ne vérifions que la première qui est évidente au vu de notre première régression.
 
 ### H4 : Hétéroscédasticité
+
+\small
 ```{r}
-ggplot(mapping = aes(x = dr$logsal, y = reg4$residuals)) +
+#Residuals vs observed values
+ggplot(mapping = aes(x = reg4[["model"]][["logsal"]], y = reg4$residuals)) +
   geom_point() + geom_smooth()
+
+ggplot(mapping = aes(x = reg4va[["model"]][["logsal"]], y = reg4va$residuals)) +
+  geom_point() + geom_smooth()
+
+# Predicted values versus observed values
+ggplot(mapping = aes(x =reg4[["model"]][["logsal"]], y = reg4[["fitted.values"]])) +
+  geom_point() + geom_smooth()
+
+ggplot(mapping = aes(x =reg4va[["model"]][["logsal"]], y = reg4va[["fitted.values"]])) +
+  geom_point() + geom_smooth()
+
 ```
 ### H5 : absence de corrélations des résidus
 ```{r}
-#Test de Durbin-Watson
+#Test de Durbin-Watson (null hypothesis is :  There is no correlation among the residuals)
 library(lmtest)
-dwtest(reg4)  # hypothèse nulle valide : il y a non auto-corrélation entre les résidus
-```
+dwtest(reg4)  # t-stat is 1.7,  p-value is less than 0.05, we can reject the null hypothesis and conclude that the residuals in this regression model are autocorrelated
 
+
+
+```
+\normalsize
 
 ### H6 : Normalité des résidus
+\small
 
 ```{r}
 #QQ plot
 e4 <- reg4$residuals 
-qqnorm(e7,datax=TRUE,ylab="Quantiles observés",xlab="Quantiles théoriques")
+qqnorm(e4,datax=TRUE,ylab="Quantiles observés",xlab="Quantiles théoriques")
+
+qqnorm(reg4va$residuals ,datax=TRUE,ylab="Quantiles observés",xlab="Quantiles théoriques")
+
+
 ```
 
 # Comment
